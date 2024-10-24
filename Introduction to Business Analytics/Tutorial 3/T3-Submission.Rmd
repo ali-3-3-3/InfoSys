@@ -1,0 +1,284 @@
+---
+title: "Tutorial 3"
+output: 
+  html_document: default
+  pdf_document: default
+---
+
+## Tutorial 3
+
+### Preparation
+
+#```{css, echo=FALSE}
+
+#.rpivotTable{ overflow-x: scroll; }
+#.rpivotTable{ overflow: auto; }
+
+#```
+
+```{r load-libraries, echo=TRUE}
+#install.packages - only need to run this code once to install the package
+# load required packages
+# library("xxxx")
+library("tidyverse") #need to call the library before you use the packages
+library("rpivotTable")
+library("knitr")
+```
+
+### Tutorial 3 Part 2 (To be submitted)
+
+- Dataset required: `ds_salaries.csv`
+
+The dataset contains Data Science jobs salary data aggregated by ai-jobs.net. There are 607 observations and 11 variables. Each of the variable (column) is defined as follows: 
+
+- `work_year`: The year the salary was paid.
+- `experience_level`: The experience level in the job during the year with the following possible values: EN Entry-level / Junior; MI Mid-level / Intermediate; SE Senior-level / Expert; EX Executive-level / Director
+- `employment_type`: The type of employment for the role: PT Part-time; FT Full-time; CT Contract; FL Freelance
+- `job_title`: The role worked in during the year.
+- `salary`: The total gross salary amount paid.
+- `salary_currency`: The currency of the salary paid as an ISO 4217 currency code.
+- `salary_in_usd`: The salary in USD (FX rate divided by avgerage USD rate for the respective year via fxdata.foorilla.com).
+- `employee_residence`: Employee's primary country of residence during the work year as an ISO 3166 country code.
+- `remote_ratio`: The overall amount of work done remotely, possible values are as follows: 0 No remote work (less than 20%); 50 Partially remote; 100 Fully remote (more than 80%)
+- `company_location`: The country of the employer's main office or contracting branch as an ISO 3166 country code.
+- `company_size`: The average number of people that worked for the company during the year: S less than 50 employees (small); M 50 to 250 employees (medium); L more than 250 employees (large)
+
+```{r q2-read-dataset, echo=TRUE}
+#import dataset into RStudio
+
+library(readr)
+DS <- read_csv("C:/Users/aliya/OneDrive/Desktop/ds_salaries.csv")
+View(DS)
+
+```
+
+As a business analytics analyst, you are required to perform the following tasks as described in each question below. 
+
+### Q2.(ai) Job Information Dashboard Part 1 (4 marks)
+- First, analyse the data to see how many job titles are captured in the dataset? Write you answer below.
+- Next, create a table and barplot to visualise the frequency distribution for the top 10 Job titles. 
+
+```{r q2.(ai), echo=TRUE}
+Job_Titles <- DS %>%
+  group_by(`job_title`) %>%
+  summarise(n=n()) %>%
+  arrange(desc(n))
+
+# From the table above, there are 50 jobs
+
+Top10Jobs <- Job_Titles %>%
+  slice(1:10)
+kable(Top10Jobs, caption = "Frequency of Job Titles")
+
+barplot(Top10Jobs$n, main="Frequency Distribution of Top 10 Job Titles", xlab="Job Titles", ylab="Frequency", names.arg = Top10Jobs$job_title, cex.names = 0.2, col = "magenta")
+
+```
+
+
+### Q2.(aii) Job Information Dashboard Part 2 (6 marks)
+- Create a table and pie chart for each of the following variables: `employment_type`, `experience_level`, `work_year` (6 marks)
+```{r q2.(aii), echo=TRUE}
+# employment_type
+EmploymentType <- DS %>%
+  group_by(`employment_type`) %>%
+  summarise(n=n())
+kable(EmploymentType, caption = "Frequency of Employment Types")
+
+slice.employmenttype <- EmploymentType$n
+employmenttype.piepercent <- 100*round(EmploymentType$n/sum(EmploymentType$n), 2)
+label <- EmploymentType$employment_type
+label <- paste(label, ",", sep=" ")
+label <- paste(label, employmenttype.piepercent)
+label <- paste(label, "%", sep=" ")
+pie(slice.employmenttype,
+    labels=label,
+    col=c("blue", "cyan", "dodgerblue", "purple"),
+    radius=1,
+    main="Employment Type",
+    cex = 0.5)
+legend("bottomleft", EmploymentType$employment_type, cex = 0.8, fill = c("blue", "cyan", "dodgerblue", "purple"))
+
+# experience_level
+EL <- DS %>%
+  group_by(`experience_level`) %>%
+  summarise(n=n())
+kable(EL, caption = "Frequency of Experience Level")
+
+slice.el <- EL$n
+el.piepercent <- 100*round(EL$n/sum(EL$n), 2)
+label <- EL$experience_level
+label <- paste(label, ",", sep=" ")
+label <- paste(label, el.piepercent)
+label <- paste(label, "%", sep=" ")
+pie(slice.el,
+    labels=label,
+    col=c("red", "orange", "yellow", "green"),
+    radius=1,
+    main="Experience Level",
+    cex = 0.75)
+legend("bottomleft", EL$experience_level, cex = 0.8, fill = c("red", "orange", "yellow", "green"))
+
+# work_year
+WY <- DS %>%
+  group_by(`work_year`) %>%
+  summarise(n=n())
+kable(WY, caption = "Frequency of Work Year")
+
+slice.wy <- WY$n
+wy.piepercent <- 100*round(WY$n/sum(WY$n), 2)
+label <- WY$work_year
+label <- paste(label, ",", sep=" ")
+label <- paste(label, wy.piepercent)
+label <- paste(label, "%", sep=" ")
+pie(slice.wy,
+    labels=label,
+    col=c("green", "blue", "magenta"),
+    radius=1,
+    main="Work Year",
+    cex = 0.75)
+titles <- c("2020", "2021", "2022")
+legend("bottomleft", titles, cex = 0.8, fill = c("green", "blue", "magenta"))
+
+```
+
+### Q2.(aiii) Job Information Dashboard Part 3 (5 marks)
+- Create a table and chart to compare the frequency distributions for `employment_type` across the top 3 job titles.
+- Create a table and chart to compare the frequency distributions for `experience_level` across the top 3 job titles.
+
+- Based on charts in 2aii and 2aiii, describe briefly the type of jobs that are in the dataset. For example, is there more of a particular employment type in the data, and is the pattern the same for the top 3 job titles. 
+
+```{r q2.(aiii), echo=TRUE}
+# `employment_type` across the top 3 job titles
+ETJT <- DS %>%
+  select(job_title, employment_type) %>%
+   filter(job_title == 'Data Scientist'| job_title == 'Data Engineer'| job_title == 'Data Analyst')
+ETJT.table <- table(ETJT$employment_type, ETJT$job_title)
+
+titles <- c("Data Analyst", "Data Engineer", "Data Scientist")
+type <- c("FL", "FT", "PT")
+
+barplot(ETJT.table, main = "Employment Type of Top 3 Job Titles", names.arg = titles, xlab = "Number of people", ylab = "Job Titles", col = c("Red", "Orange", "Yellow"), beside = TRUE, horiz = TRUE, cex.names = 0.8)
+legend("bottomright", type, cex = 0.8, fill = c("Red", "Orange", "Yellow"))
+
+# `experience_level` across the top 3 job titles
+ELJT <- DS %>%
+  select(job_title, experience_level) %>%
+   filter(job_title == 'Data Scientist'| job_title == 'Data Engineer'| job_title == 'Data Analyst')
+ELJT.table <- table(ELJT$experience_level, ELJT$job_title)
+
+titles <- c("Data Analyst", "Data Engineer", "Data Scientist")
+type <- c("EN", "EX", "MI", "SE")
+colors <- c("green", "blue", "pink", "purple")
+
+barplot(ELJT.table, main = "Experience Level of Top 3 Job Titles", names.arg = titles, xlab = "Number of people", ylab = "Job Titles", col = colors, beside = TRUE, horiz = TRUE, cex.names = 0.8)
+legend("bottomright", type, cex = 0.8, fill = colors)
+
+```
+
+### Q2.(b) Salary Dashboard (10 marks)
+This dashboard is to visualise the salary data captured in the dataset better. 
+
+- i. Create a table and chart to visualise the frequency distributions for `salaryinusd`
+- ii. Create separate tables and charts to visualise the frequency distributions for `salaryinusd` across the top 3 Job titles. Do you observe any difference across the 3 job titles? [HINT: you may want to use the same breaks/bin width for the 3 charts for ease of comparison]
+
+```{r q2b, echo=TRUE}
+#i
+options(scipen = 100)
+h.salary <- hist(DS$`salary_in_usd`,
+                 main = "Histogram of Salary in USD",
+                 xlab = "Salary in USD",
+                 ylab = "No. of workers",
+                 col=c("darkorange"),
+                 ylim = c(0,350),
+                 breaks = 8,
+                 labels = TRUE)
+
+salary.group <- cut(DS$`salary_in_usd`, h.salary$breaks, include.lowest = TRUE)
+table.salary <- table(salary.group)
+kable(table.salary, caption = "Frequency distribution by Salary in USD")
+
+# ii
+## Data Scientist
+dataSci.salary <- DS %>%
+  select(job_title, salary_in_usd) %>%
+  filter(job_title == "Data Scientist")
+
+h.dataSci.salary <- hist(dataSci.salary$`salary_in_usd`,
+                         main = "Histogram of Data Scientists' Salary in USD",
+                         xlab = "Salary in USD",
+                         ylab = "No. of workers",
+                         col=c("red"),
+                         ylim = c(0, 80),
+                         breaks = 4,
+                         labels = TRUE)
+
+salary.ofDataSci <- cut(dataSci.salary$`salary_in_usd`, h.dataSci.salary$breaks, include.lowest = TRUE)
+t.dataSci.salary <- table(salary.ofDataSci)
+kable(t.dataSci.salary, caption = "Frequency distribution of Data Scientists by Salary in USD")
+
+## Data Engineer
+dataEng.salary <- DS %>%
+  select(job_title, salary_in_usd) %>%
+  filter(job_title == "Data Engineer")
+
+h.dataEng.salary <- hist(dataEng.salary$`salary_in_usd`,
+                         main = "Histogram of Data Engineers' Salary in USD",
+                         xlab = "Salary in USD",
+                         ylab = "No. of workers",
+                         col=c("orange"),
+                         ylim = c(0, 80),
+                         breaks = 4,
+                         labels = TRUE)
+
+salary.ofDataEng <- cut(dataEng.salary$`salary_in_usd`, h.dataEng.salary$breaks, include.lowest = TRUE)
+t.dataEng.salary <- table(salary.ofDataEng)
+kable(t.dataEng.salary, caption = "Frequency distribution of Data Engineers by Salary in USD")
+
+### Data Analyst
+dataAna.salary <- DS %>%
+  select(job_title, salary_in_usd) %>%
+  filter(job_title == "Data Analyst")
+
+h.dataAna.salary <- hist(dataAna.salary$`salary_in_usd`,
+                         main = "Histogram of Data Analysts' Salary in USD",
+                         xlab = "Salary in USD",
+                         ylab = "No. of workers",
+                         col=c("red"),
+                         ylim = c(0, 80),
+                         breaks = 2,
+                         labels = TRUE)
+
+salary.ofDataAna <- cut(dataAna.salary$`salary_in_usd`, h.dataAna.salary$breaks, include.lowest = TRUE)
+t.dataAna.salary <- table(salary.ofDataAna)
+kable(t.dataAna.salary, caption = "Frequency distribution of Data Analysts by Salary in USD")
+
+### Data scientists are the highest earning workers, followed by data engineers, then finally, data analysts.
+```
+
+### Q2.(c) Interactive Contingency Table (2 marks)
+Create a contingency table with the `rPivotTable` function for Data Scientist jobs that displays frequency for the following 3 variables: experience_level, employment_type and work_year. 
+
+```{r q2.(c), echo=TRUE}
+con.table <- DS %>%
+  select(experience_level, employment_type, work_year)
+
+rpivotTable(con.table,rows=c("experience_level"), cols=c("employment_type", "work_year"))
+
+```
+
+
+### Q2.(d) Pareto Analysis (3 marks)
+Conduct a Pareto analysis on `salary_in_usd` to be displayed in this dashboard. (Hint: check the number and percentage of individuals that contribute  to 80% of the total salary_in_usd earned in the dataset. Do you observe a 80-20 split? If not, what is the ratio?). 
+
+```{r q2.(d), echo=TRUE}
+salaries <- DS %>%
+  select(salary_in_usd) %>%
+  arrange(desc(salary_in_usd))
+
+salaries$percentage <- salaries$salary_in_usd/sum(salaries$salary_in_usd)
+salaries$cumulative <- cumsum(salaries$percentage)
+salaries$cumulative <- as.numeric(rownames(salaries))/nrow(salaries)
+which(salaries$cumulative > 0.8)
+(which(salaries$cumulative > 0.8)) / nrow(salaries)
+
+```
