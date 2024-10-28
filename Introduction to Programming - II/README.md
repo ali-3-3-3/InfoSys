@@ -1,0 +1,1 @@
+Follow-up module to Introduction to Programming - I. I've lost the majority of these files to the void. This, alongside Data Structures and Algos, is my inspiration for logging my schoolwork for safekeeping. Includes maybe 3-4 folders of work covered, out of maybe say 15 or so. RIP.
